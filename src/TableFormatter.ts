@@ -1,6 +1,6 @@
 import { Editor } from "codemirror";
 import { CliPrettify } from 'markdown-table-prettify';
-import { patchCellWidth } from './patchCellWidth';
+import { patchCellWidth, setAmbiguousWidth } from './patchCellWidth';
 
 // Make CliPrettify measure cells by their display width, so that tables containing
 // wide characters (kana, Hangul, fullwidth forms, emoji, ...) are aligned correctly.
@@ -11,8 +11,15 @@ module.exports = {
 	default: function(_context: any) {
 
 		const plugin = function(CodeMirror) {
-			CodeMirror.defineExtension('formatTable', function() {
+			// ambiguousWidth: width of East Asian Ambiguous characters (※ ○ × ① α ...), 1 or 2.
+			// It is decided by the main plugin script (index.ts) from the plugin setting and the Joplin
+			// UI language, and passed here through editor.execCommand's "args".
+			CodeMirror.defineExtension('formatTable', function(ambiguousWidth?: number) {
 				const cm: Editor = this; // to get autocomplete working
+
+				// Anything other than 2 (including a missing argument, e.g. when the command is invoked
+				// by another plugin without arguments) falls back to narrow, the Western default.
+				setAmbiguousWidth(ambiguousWidth === 2 ? 2 : 1);
 
 				const cursor = cm.getCursor();
 				let startLine = cursor.line;

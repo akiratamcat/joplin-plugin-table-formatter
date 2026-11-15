@@ -26,10 +26,24 @@
 import { Cell } from 'markdown-table-prettify/src/models/cell';
 import { RowViewModel } from 'markdown-table-prettify/src/viewModels/rowViewModel';
 import { RowViewModelFactory } from 'markdown-table-prettify/src/viewModelFactories/rowViewModelFactory';
-import { stringWidth } from './charWidth';
+import { AmbiguousWidth, stringWidth } from './charWidth';
 
 /** Guards against patching twice (e.g. when the content script is evaluated more than once). */
 let patched = false;
+/**
+ * Width used for East Asian Ambiguous characters by the patched methods.
+ * Kept as module-level state because the library calls getLength / buildSeparator itself, so the
+ * value cannot be passed as an argument. It is set right before every formatting run.
+ */
+let ambiguousWidth: AmbiguousWidth = 1;
+
+/**
+ * Sets the width used for East Asian Ambiguous characters in subsequent formatting.
+ * @param width 1 = narrow (Western fonts), 2 = wide (most CJK fonts)
+ */
+export function setAmbiguousWidth(width: AmbiguousWidth): void {
+	ambiguousWidth = width;
+}
 
 /**
  * Replaces the width calculations of markdown-table-prettify with display-width aware versions.
@@ -41,7 +55,7 @@ export function patchCellWidth(): void {
 	// Width of a cell's text, used for padding. A regular function (not an arrow function) is
 	// required so that `this` refers to the Cell instance.
 	Cell.prototype.getLength = function (): number {
-		return stringWidth(this.getValue());
+		return stringWidth(this.getValue(), ambiguousWidth);
 	};
 
 	// Same logic as the original buildSeparator, except that the width of each padded cell is
@@ -56,7 +70,7 @@ export function patchCellWidth(): void {
 		const lengths: number[] = Array(columnCount).fill(0);
 		for (const row of rows) {
 			for (let i = 0; i < columnCount; i++) {
-				lengths[i] = Math.max(lengths[i], stringWidth(row.getValueAt(i)));
+				lengths[i] = Math.max(lengths[i], stringWidth(row.getValueAt(i), ambiguousWidth));
 			}
 		}
 

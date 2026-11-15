@@ -45,3 +45,36 @@ describe('stringWidth', () => {
 		expect(stringWidth(value)).toBe(expected);
 	});
 });
+
+// East Asian Ambiguous characters change width depending on the ambiguousWidth argument,
+// while every other category must keep its width regardless of that argument.
+describe('stringWidth with East Asian Ambiguous characters', () => {
+	test.each([
+		// value, width when ambiguous = 1, width when ambiguous = 2
+
+		// --- Ambiguous: follow the argument ---
+		['※', 1, 2], // reference mark
+		['○●□■△☆★', 7, 14], // geometric shapes
+		['×÷±°', 4, 8], // math symbols and degree sign
+		['①Ⅰ', 2, 4], // circled digit, Roman numeral
+		['αΩ', 2, 4], // Greek
+		['АЯ', 2, 4], // Cyrillic
+		['…', 1, 2], // horizontal ellipsis
+		['─│┌', 3, 6], // box drawing
+
+		// --- Not ambiguous: the argument must have no effect ---
+		['abc', 3, 3], // ASCII is never affected
+		['ｱｲｳ', 3, 3], // halfwidth katakana is never affected
+		['漢字', 4, 4], // wide is never affected
+		['e\u0301', 1, 1], // U+0301 is listed as Ambiguous too, but zero width wins
+		['\u{1F170}', 1, 2], // NEGATIVE SQUARED LATIN CAPITAL LETTER A: ambiguous outside the BMP
+	])('%s => %i / %i', (value, narrow, wide) => {
+		expect(stringWidth(value, 1)).toBe(narrow);
+		expect(stringWidth(value, 2)).toBe(wide);
+	});
+
+	// Callers that do not pass the argument (e.g. the fix branch behaviour) get Western widths
+	test('defaults to narrow', () => {
+		expect(stringWidth('※○')).toBe(2);
+	});
+});
