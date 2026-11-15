@@ -14,7 +14,8 @@ module.exports = {
 			// ambiguousWidth: width of East Asian Ambiguous characters (※ ○ × ① α ...), 1 or 2.
 			// It is decided by the main plugin script (index.ts) from the plugin setting and the Joplin
 			// UI language, and passed here through editor.execCommand's "args".
-			CodeMirror.defineExtension('formatTable', function(ambiguousWidth?: number) {
+			// Test build: renamed from 'formatTable' so that it does not collide with the original plugin
+			CodeMirror.defineExtension('formatTableEaw', function(ambiguousWidth?: number) {
 				const cm: Editor = this; // to get autocomplete working
 
 				// Anything other than 2 (including a missing argument, e.g. when the command is invoked
