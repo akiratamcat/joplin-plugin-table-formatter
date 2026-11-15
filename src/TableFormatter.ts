@@ -1,5 +1,8 @@
 import { Editor } from "codemirror";
 import { CliPrettify } from 'markdown-table-prettify';
+import { patchCellWidth } from './patchCellWidth';
+
+patchCellWidth();
 
 module.exports = {
 	default: function(_context: any) {
