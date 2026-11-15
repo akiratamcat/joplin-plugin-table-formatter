@@ -17,6 +17,7 @@ const ZERO_WIDTH: Range[] = [
 	[0x064B, 0x065F], // Arabic harakat
 	[0x00AD, 0x00AD], // Soft hyphen
 	[0x034F, 0x034F], // Combining Grapheme Joiner
+	[0x1160, 0x11FF], // Hangul Jamo medial vowels / final consonants (combine with the preceding initial in NFD)
 	[0x1AB0, 0x1AFF], // Combining Diacritical Marks Extended
 	[0x1DC0, 0x1DFF], // Combining Diacritical Marks Supplement
 	[0x200B, 0x200F], // ZWSP, ZWNJ, ZWJ, LRM, RLM
@@ -24,6 +25,7 @@ const ZERO_WIDTH: Range[] = [
 	[0x2060, 0x2064], // Word joiner, invisible operators
 	[0x20D0, 0x20FF], // Combining Diacritical Marks for Symbols
 	[0x3099, 0x309A], // Combining kana voiced / semi-voiced sound marks
+	[0xD7B0, 0xD7FF], // Hangul Jamo Extended-B (medial vowels / final consonants)
 	[0xFE00, 0xFE0F], // Variation Selectors
 	[0xFE20, 0xFE2F], // Combining Half Marks
 	[0xFEFF, 0xFEFF], // BOM / ZWNBSP

@@ -14,6 +14,10 @@ describe('stringWidth', () => {
 		['、。「」', 8], // CJK punctuation
 		['　', 2], // ideographic space
 		['한글', 4],
+		['한국어'.normalize('NFD'), 6], // decomposed Hangul (initial + medial + final jamo)
+		['한', 2], // ᄒ + ᅡ + ᆫ
+		['ᄀힰ', 2], // initial + Jamo Extended-B medial
+		['ㅎㅏㄴ', 6], // compatibility jamo are standalone (not combining)
 		['𠮷', 2], // surrogate pair (CJK Ext. B)
 		['😀', 2],
 		['👍🏽', 2], // emoji + skin tone modifier
