@@ -2,6 +2,9 @@ import { Editor } from "codemirror";
 import { CliPrettify } from 'markdown-table-prettify';
 import { patchCellWidth } from './patchCellWidth';
 
+// Make CliPrettify measure cells by their display width, so that tables containing
+// wide characters (kana, Hangul, fullwidth forms, emoji, ...) are aligned correctly.
+// This runs once when the content script is loaded into the editor.
 patchCellWidth();
 
 module.exports = {

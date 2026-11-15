@@ -1,13 +1,34 @@
-// Display width calculation based on Unicode East Asian Width (UAX #11).
-//
-// markdown-table-prettify only treats CJK Unified Ideographs as double width,
-// so kana, fullwidth forms, Hangul, CJK punctuation, emoji, etc. are counted
-// as a single column and tables containing them are misaligned.
+/**
+ * Display width calculation for monospaced text, based on Unicode East Asian Width (UAX #11).
+ *
+ * Background:
+ *   markdown-table-prettify pads table cells according to the "length" of their text. Its own
+ *   implementation only treats CJK Unified Ideographs (kanji / hanzi / hanja) as double width, so
+ *   kana, fullwidth forms, Hangul, CJK punctuation, emoji, etc. are counted as a single column and
+ *   tables containing them end up misaligned. This module provides a more complete width function
+ *   that is plugged into the library by patchCellWidth.ts.
+ *
+ * Width rules (checked in this order):
+ *   0 - zero width: combining marks, zero-width characters, variation selectors, ...
+ *       They are drawn on top of / between other characters and take no column of their own.
+ *   2 - wide: East Asian Width "W" (Wide) and "F" (Fullwidth), e.g. kanji, kana, Hangul
+ *       syllables, fullwidth ASCII, CJK punctuation and most emoji.
+ *   1 - everything else, e.g. ASCII, Latin, halfwidth katakana.
+ *
+ * The tables below are hand-maintained subsets of the Unicode data, covering the characters that are
+ * realistically used in Markdown tables. They are not generated from EastAsianWidth.txt, so very rare
+ * or newly added characters may not be classified precisely.
+ */
 
+/** Inclusive range of code points: [first, last]. */
 type Range = [number, number];
 
-// Code points that occupy no column (combining marks, zero-width characters,
-// variation selectors).
+/**
+ * Code points that occupy no column.
+ * These are combining marks (accents, voiced sound marks, Hangul vowel/final jamo in decomposed
+ * form), invisible formatting characters and variation selectors. They modify or join the preceding
+ * character instead of being displayed on their own.
+ */
 const ZERO_WIDTH: Range[] = [
 	[0x0300, 0x036F], // Combining Diacritical Marks
 	[0x0483, 0x0489], // Cyrillic combining marks
@@ -34,7 +55,12 @@ const ZERO_WIDTH: Range[] = [
 	[0xE0100, 0xE01EF], // Variation Selectors Supplement
 ];
 
-// Code points whose East Asian Width is Wide (W) or Fullwidth (F).
+/**
+ * Code points whose East Asian Width is Wide (W) or Fullwidth (F); they occupy two columns.
+ * Unnamed single entries in the U+2xxx block are emoji that have the "Wide" property
+ * (e.g. U+231A WATCH, U+26A1 HIGH VOLTAGE, U+2705 WHITE HEAVY CHECK MARK).
+ * The U+1Fxxx entries are the emoji blocks, excluding the code points that are not Wide.
+ */
 const WIDE: Range[] = [
 	[0x1100, 0x115F], // Hangul Jamo initial consonants
 	[0x231A, 0x231B],
@@ -127,8 +153,17 @@ const WIDE: Range[] = [
 	[0x30000, 0x3FFFD], // CJK Unified Ideographs Extension G-
 ];
 
+/**
+ * ZERO WIDTH JOINER. Joins emoji into a single glyph, e.g.
+ * MAN + ZWJ + WOMAN + ZWJ + GIRL is displayed as one "family" emoji.
+ */
 const ZWJ = 0x200D;
 
+/**
+ * Returns true if the code point falls into one of the ranges.
+ * A linear scan is fast enough here: the tables have about 100 entries and only the cells of
+ * a single table are measured per formatting.
+ */
 function inRanges(codePoint: number, ranges: Range[]): boolean {
 	for (const [start, end] of ranges) {
 		if (codePoint >= start && codePoint <= end) return true;
@@ -136,23 +171,39 @@ function inRanges(codePoint: number, ranges: Range[]): boolean {
 	return false;
 }
 
+/**
+ * Returns the number of columns (0, 1 or 2) a single code point occupies in a monospaced font.
+ * The zero-width table is checked first, because a few code points appear in both tables
+ * (e.g. U+3099 COMBINING KATAKANA-HIRAGANA VOICED SOUND MARK lies inside the Wide kana block).
+ */
 export function codePointWidth(codePoint: number): number {
 	if (inRanges(codePoint, ZERO_WIDTH)) return 0;
 	if (inRanges(codePoint, WIDE)) return 2;
 	return 1;
 }
 
+/**
+ * Returns the number of columns a string occupies in a monospaced font.
+ *
+ * @example
+ * stringWidth('abc')      // 3
+ * stringWidth('日本語')   // 6
+ * stringWidth('e\u0301')  // 1 (e + combining acute accent)
+ */
 export function stringWidth(value: string): number {
 	let width = 0;
+	// True right after a ZWJ: the next character is merged into the preceding emoji
 	let afterZwj = false;
-	// for..of iterates by code point, so surrogate pairs are handled as one character
+	// for..of iterates by code point (not by UTF-16 code unit), so a surrogate pair such as
+	// U+20BB7 or an emoji is handled as one character instead of two halves
 	for (const char of value) {
 		const codePoint = char.codePointAt(0);
-		// A character joined by ZWJ (e.g. family emoji) is rendered as part of the preceding glyph
+		// The character joined by ZWJ is drawn as part of the preceding glyph: no extra column
 		if (afterZwj) {
 			afterZwj = false;
 			continue;
 		}
+		// ZWJ itself is invisible; remember that the next character is joined
 		if (codePoint === ZWJ) {
 			afterZwj = true;
 			continue;
