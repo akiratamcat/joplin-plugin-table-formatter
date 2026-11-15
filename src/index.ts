@@ -45,9 +45,12 @@ joplin.plugins.register({
 
 		joplin.contentScripts.register(ContentScriptType.CodeMirrorPlugin, "TableFormatter", "./TableFormatter.js");
 		joplin.commands.register({
-			name: 'formatTable',
-			// Shown in the Edit menu and the editor context menu
-			label: _('Format Table'),
+			// Test build: command name and label differ from the original plugin so that both can be
+			// installed side by side without their commands colliding.
+			name: 'formatTableEaw',
+			// Shown in the Edit menu and the editor context menu. " (EAW)" is appended outside _() so that
+			// the msgid stays "Format Table" and the existing translations keep working.
+			label: _('Format Table') + ' (EAW)',
 			execute: async () => {
 				// Read the settings on every run so changes to the UI language or the plugin setting
 				// apply immediately, without restarting Joplin.
@@ -58,11 +61,11 @@ joplin.plugins.register({
 
 				// The formatting itself runs inside the editor (TableFormatter.ts, a CodeMirror content
 				// script), which cannot read plugin settings. Pass the resolved width to it as an argument
-				// of the "formatTable" CodeMirror extension.
-				await joplin.commands.execute('editor.execCommand', { name: 'formatTable', args: [ambiguousWidth] });
+				// of the "formatTableEaw" CodeMirror extension.
+				await joplin.commands.execute('editor.execCommand', { name: 'formatTableEaw', args: [ambiguousWidth] });
 			}
 		});
-		joplin.views.menuItems.create("Format Table", "formatTable", MenuItemLocation.Edit);
-		joplin.views.menuItems.create("Format Table Context", "formatTable", MenuItemLocation.EditorContextMenu);
+		joplin.views.menuItems.create("Format Table (EAW)", "formatTableEaw", MenuItemLocation.Edit);
+		joplin.views.menuItems.create("Format Table (EAW) Context", "formatTableEaw", MenuItemLocation.EditorContextMenu);
 	},
 });
