@@ -41,6 +41,32 @@ To build the plugin, simply run `npm run dist`.
 
 The project is setup to use TypeScript, although you can change the configuration to use plain JavaScript.
 
+## Translations
+
+The settings screen and menu labels are translated with gettext. The plugin follows Joplin's UI language
+and falls back to English for languages without a translation.
+
+| File | Purpose |
+|---|---|
+| `src/locales/messages.pot` | Template of all strings to translate, extracted from the source code |
+| `src/locales/<locale>.po` | Translations of one language, e.g. `ja_JP.po` (edit with [Poedit](https://poedit.net/)) |
+| `src/locales/translations.json` | Generated from the `.po` files and bundled into the plugin (not committed) |
+
+Commands:
+
+- `npm run i18n:extract` - extract the `_('...')` strings from `src/**/*.ts` into `messages.pot` and merge them into
+  every `.po` file. Requires GNU gettext 0.24 or later for TypeScript support; the tools bundled with Poedit are used
+  automatically on Windows. Set `GETTEXT_TOOLS_DIR` to use another installation.
+- `npm run i18n:check` - validate the `.po` files with `msgfmt --check`.
+- `npm run i18n:compile` - generate `translations.json`. Runs automatically as part of `npm run dist` and `npm test`,
+  and needs only Node.js.
+
+To change or add a UI string, wrap it in `_()` (imported from `src/i18n.ts`; the argument must be a string literal),
+run `npm run i18n:extract`, then translate the new entries in the `.po` files.
+
+To add a language, copy `messages.pot` to `src/locales/<locale>.po` using Joplin's locale code (e.g. `zh_CN.po`),
+or create it from the template in Poedit, and translate it.
+
 ## Updating the plugin framework
 
 To update the plugin framework, run `npm run update`.

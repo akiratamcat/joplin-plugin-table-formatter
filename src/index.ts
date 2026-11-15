@@ -1,6 +1,7 @@
 import joplin from 'api';
 import { ContentScriptType, MenuItemLocation, SettingItemType } from 'api/types';
 import { AMBIGUOUS_WIDTH_SETTING_DEFAULT, resolveAmbiguousWidth } from './ambiguousWidth';
+import { _, setLocale } from './i18n';
 
 /** Name of the section shown in Joplin's options screen for this plugin. */
 const SETTINGS_SECTION = 'tableFormatter';
@@ -15,8 +16,12 @@ joplin.plugins.register({
 	onStart: async function() {
 		// Settings registered by plugins are not persisted as definitions: they must be registered
 		// again on every start (their values are kept by Joplin).
+		// Choose the UI language before registering anything: Joplin keeps the labels passed at
+		// registration time. Strings wrapped in _() are translated (see i18n.ts and src/locales/).
+		setLocale(await joplin.settings.globalValue('locale'));
+
 		await joplin.settings.registerSection(SETTINGS_SECTION, {
-			label: 'Table Formatter',
+			label: _('Table Formatter'),
 			iconName: 'fas fa-table',
 		});
 		// Rendered as a dropdown list (isEnum). The option keys are the values passed to
@@ -27,21 +32,22 @@ joplin.plugins.register({
 				type: SettingItemType.String,
 				isEnum: true,
 				options: {
-					auto: 'Auto (2 for Japanese, Chinese and Korean UI languages, otherwise 1)',
-					'1': 'Always 1 (narrow)',
-					'2': 'Always 2 (wide)',
+					auto: _('Auto (2 for Japanese, Chinese and Korean UI languages, otherwise 1)'),
+					'1': _('Always 1 (narrow)'),
+					'2': _('Always 2 (wide)'),
 				},
 				public: true,
 				section: SETTINGS_SECTION,
-				label: 'Width of East Asian Ambiguous characters',
-				description: 'Characters such as ※ ○ × ① α are rendered narrow in Western fonts and wide in most CJK fonts. Choose the width that matches your editor font.',
+				label: _('Width of East Asian Ambiguous characters'),
+				description: _('Characters such as ※ ○ × ① α are rendered narrow in Western fonts and wide in most CJK fonts. Choose the width that matches your editor font.'),
 			},
 		});
 
 		joplin.contentScripts.register(ContentScriptType.CodeMirrorPlugin, "TableFormatter", "./TableFormatter.js");
 		joplin.commands.register({
 			name: 'formatTable',
-			label: 'Format Table',
+			// Shown in the Edit menu and the editor context menu
+			label: _('Format Table'),
 			execute: async () => {
 				// Read the settings on every run so changes to the UI language or the plugin setting
 				// apply immediately, without restarting Joplin.
